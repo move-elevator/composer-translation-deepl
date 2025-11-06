@@ -1,0 +1,88 @@
+{
+	"name": "move-elevator/composer-translation-deepl",
+	"description": "Auto-fill missing translations using DeepL API",
+	"license": "MIT",
+	"type": "library",
+	"authors": [
+		{
+			"name": "Konrad Michalik",
+			"email": "km@move-elevator.de",
+			"role": "Maintainer"
+		}
+	],
+	"require": {
+		"php": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0",
+		"deeplcom/deepl-php": "^1.9",
+		"move-elevator/composer-translation-validator": "^1.0",
+		"nyholm/psr7": "^1.8",
+		"symfony/console": "^5.0 || ^6.0 || ^7.0",
+		"symfony/http-client": "^7.3",
+		"symfony/translation": "^5.0 || ^6.0 || ^7.0"
+	},
+	"require-dev": {
+		"armin/editorconfig-cli": "^1.8 || ^2.0",
+		"eliashaeussler/rector-config": "^3.0",
+		"ergebnis/composer-normalize": "^2.44",
+		"konradmichalik/php-cs-fixer-preset": "^0.1",
+		"konradmichalik/php-doc-block-header-fixer": "^0.3",
+		"phpstan/phpstan": "^1.12 || ^2.0",
+		"phpstan/phpstan-phpunit": "^1.4 || ^2.0",
+		"phpstan/phpstan-symfony": "^1.4 || ^2.0",
+		"phpunit/phpunit": "^10.0 || ^11.0",
+		"symfony/var-dumper": "^6.0 || ^7.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"MoveElevator\\ComposerTranslationDeepl\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"MoveElevator\\ComposerTranslationDeepl\\Tests\\": "tests/"
+		}
+	},
+	"bin": [
+		"bin/autotranslate"
+	],
+	"config": {
+		"allow-plugins": {
+			"ergebnis/composer-normalize": true,
+			"move-elevator/composer-translation-validator": true,
+			"php-http/discovery": true
+		}
+	},
+	"extra": {
+		"konradmichalik/php-cs-fixer-preset": {
+			"copyright": 2025
+		}
+	},
+	"scripts": {
+		"autotranslate": "autotranslate",
+		"fix": [
+			"@fix:composer",
+			"@fix:editorconfig",
+			"@fix:php"
+		],
+		"fix:composer": "@composer normalize",
+		"fix:editorconfig": "@lint:editorconfig --fix",
+		"fix:php": "php-cs-fixer fix",
+		"lint": [
+			"@lint:composer",
+			"@lint:editorconfig",
+			"@lint:php"
+		],
+		"lint:composer": "@fix:composer --dry-run",
+		"lint:editorconfig": "ec",
+		"lint:php": "@fix:php --dry-run",
+		"migration": [
+			"@migration:rector"
+		],
+		"migration:rector": "rector process -c rector.php",
+		"sca": [
+			"@sca:php"
+		],
+		"sca:php": "phpstan analyse --memory-limit=2G",
+		"test": "@test:coverage --no-coverage",
+		"test:coverage": "XDEBUG_MODE=coverage phpunit -c phpunit.xml"
+	}
+}

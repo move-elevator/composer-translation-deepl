@@ -1,0 +1,14 @@
+/vendor/
+/.phpunit.cache
+/composer.lock
+.DS_Store
+.env
+.idea/
+*.log
+
+# QA Tools
+/.build/
+/.php-cs-fixer.cache
+/phpstan.neon.dist
+/rector.php.dist
+/.phpunit.result.cache
