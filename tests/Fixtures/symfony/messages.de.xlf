@@ -1,11 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-    <file source-language="en" target-language="de" datatype="plaintext" original="file.ext">
-        <body>
-            <trans-unit id="welcome.message">
-                <source>welcome.message</source>
-                <target>Willkommen</target>
-            </trans-unit>
-        </body>
-    </file>
+  <file source-language="de" target-language="de" datatype="plaintext" original="file.ext">
+    <body>
+      <trans-unit id="welcome.message" resname="welcome.message">
+        <source/>
+        <target state="needs-review-translation">Willkommen</target>
+        <note from="composer-translation-deepl">Auto-translated by DeepL (en → de)</note>
+      </trans-unit>
+      <trans-unit id="goodbye.message" resname="goodbye.message">
+        <source/>
+        <target state="needs-review-translation">Auf Wiedersehen</target>
+        <note from="composer-translation-deepl">Auto-translated by DeepL (en → de)</note>
+      </trans-unit>
+      <trans-unit id="button.save" resname="button.save">
+        <source/>
+        <target state="needs-review-translation">Speichern Sie</target>
+        <note from="composer-translation-deepl">Auto-translated by DeepL (en → de)</note>
+      </trans-unit>
+    </body>
+  </file>
 </xliff>

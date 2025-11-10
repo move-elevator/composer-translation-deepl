@@ -19,14 +19,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Application::class)]
-
 /**
  * ApplicationTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
  * @license MIT
  */
-
 class ApplicationTest extends TestCase
 {
     private Application $application;

@@ -9,21 +9,33 @@
 
 </div>
 
-Auto-fill missing translations using the DeepL API. A lightweight, modern Composer package that automatically completes missing translations in your translation files.
+> Autofill missing translations using the [DeepL](https://deepl.com/) API.
+
+A lightweight Composer package that automatically completes missing translations in your project translation files.
 
 ## ✨ Features
 
 * **Automatic Translation** - Uses DeepL API to fill missing translation keys
 * **Batch Processing** - Translates up to 50 keys per API request for optimal performance
-* **Multiple Formats** - XLIFF, YAML, JSON, PHP support
+* **Multiple Formats** - `XLIFF`, `YAML`, `JSON`, `PHP` support
 * **TYPO3 Compatible** - Works with TYPO3 XLIFF format
 * **Symfony/Laravel Ready** - Supports standard translation file structures
 * **Dry-Run Mode** - Preview changes before applying
 * **Progress Tracking** - Visual progress bar and detailed statistics
 * **API Usage Display** - Shows your DeepL character usage
-* **XLIFF Marking** - Optional state marking for auto-translated content
+* **XLIFF Marking** - State marking for auto-translated content
+
+> [!INFO]
+> This package is a feature addon for finding missing translations with the [composer-translation-validator](https://github.com/move-elevator/composer-translation-validator) plugin.
 
 ## 🔥 Installation
+
+### Prerequisites
+
+- PHP 8.1 or higher
+- DeepL API key ([Get one for free](https://www.deepl.com/pro-api))
+
+### Composer
 
 [![Packagist](https://img.shields.io/packagist/v/move-elevator/composer-translation-deepl?label=version&logo=packagist)](https://packagist.org/packages/move-elevator/composer-translation-deepl)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/move-elevator/composer-translation-deepl?color=brightgreen)](https://packagist.org/packages/move-elevator/composer-translation-deepl)
@@ -31,11 +43,6 @@ Auto-fill missing translations using the DeepL API. A lightweight, modern Compos
 ```bash
 composer require move-elevator/composer-translation-deepl
 ```
-
-## 📋 Prerequisites
-
-- PHP 8.1 or higher
-- DeepL API key ([Get one for free](https://www.deepl.com/pro-api))
 
 ## 📊 Usage
 
@@ -47,40 +54,37 @@ export DEEPL_API_KEY=your-api-key-here
 
 # Translate to German
 vendor/bin/autotranslate translations/ -t de
-
-# Translate to multiple languages
-vendor/bin/autotranslate translations/ -t de -t fr -t es
+# Or via Composer
+composer autotranslate translations/ -- -t de
+# Or direct PHP execution
+php bin/autotranslate -t de
 ```
 
 ### Advanced Options
 
 ```bash
+# Translate to multiple languages
+vendor/bin/autotranslate translations/ -t de -t fr -t es
+
 # Custom source locale
 vendor/bin/autotranslate -s en-US -t de-DE
 
 # Specific format
 vendor/bin/autotranslate -t de -f yaml
 
-# Mark translations as auto-translated (XLIFF only)
-vendor/bin/autotranslate -t de --mark-auto-translated
-
-# Force overwrite without confirmation
-vendor/bin/autotranslate -t de --force
-
-# Quiet mode (errors only)
-vendor/bin/autotranslate -t de -q
-
 # Custom domain
 vendor/bin/autotranslate -t de --domain validators
 ```
 
-## 📝 Documentation
-
 ### Command Options
+
+```bash
+vendor/bin/autotranslate <path> [options]
+```
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `path` | - | Path to translation files directory | `translations/` |
+| `path` |  | Path to translation files directory | `translations/` |
 | `--source-locale` | `-s` | Source locale | `en` |
 | `--target-locales` | `-t` | Target locales (multiple) | required |
 | `--api-key` | `-k` | DeepL API key | `DEEPL_API_KEY` env |
@@ -88,7 +92,7 @@ vendor/bin/autotranslate -t de --domain validators
 | `--domain` | - | Translation domain | `messages` |
 | `--dry-run` | `-d` | Simulate without writing | `false` |
 | `--force` | - | Overwrite without confirmation | `false` |
-| `--mark-auto-translated` | `-m` | Mark with XLIFF state | `false` |
+| `--no-mark-auto-translated` | - | Disable XLIFF state marking | `false` (marking enabled) |
 | `--verbose` | `-v` | Detailed output | `false` |
 | `--quiet` | `-q` | Only errors | `false` |
 

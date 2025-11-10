@@ -1,0 +1,9 @@
+# Ignore backup files created by autotranslate
+*.backup
+
+# Ignore modified translation files (keep only the templates)
+# Uncomment if you want to ignore all changes:
+# translations/*.xlf
+# translations/*.yaml
+# translations/*.json
+# translations/*.php

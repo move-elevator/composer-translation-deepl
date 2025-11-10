@@ -13,10 +13,13 @@ declare(strict_types=1);
 
 namespace MoveElevator\ComposerTranslationDeepl\Service;
 
+use MoveElevator\ComposerTranslationDeepl\Dumper\{XliffFileDumperWithEmptySource, YamlFileDumperWithExtension};
 use MoveElevator\ComposerTranslationDeepl\Enum\TranslationFormat;
 use Symfony\Component\Translation\Dumper\{JsonFileDumper, PhpFileDumper, XliffFileDumper, YamlFileDumper};
 use Symfony\Component\Translation\Loader\{JsonFileLoader, PhpFileLoader, XliffFileLoader, YamlFileLoader};
 use Symfony\Component\Translation\MessageCatalogue;
+
+use function sprintf;
 
 /**
  * TranslationService.
@@ -42,13 +45,27 @@ class TranslationService
         string $outputPath,
         TranslationFormat $translationFormat = TranslationFormat::XLIFF,
         bool $markAutoTranslated = false,
+        ?string $sourceLocale = null,
+        ?string $targetFile = null,
     ): void {
         if ($markAutoTranslated && TranslationFormat::XLIFF === $translationFormat) {
-            $this->markTranslationsAsAutoTranslated($messageCatalogue);
+            $this->markTranslationsAsAutoTranslated($messageCatalogue, $sourceLocale);
         }
 
         $dumper = $this->getDumper($translationFormat);
-        $dumper->dump($messageCatalogue, ['path' => $outputPath]);
+        $options = ['path' => $outputPath];
+
+        // If a specific target file is provided, use its extension for the dumper
+        if (null !== $targetFile) {
+            $extension = pathinfo($targetFile, \PATHINFO_EXTENSION);
+            $options['default_locale'] = $messageCatalogue->getLocale();
+            // For YAML files, preserve the exact extension (.yaml vs .yml)
+            if (TranslationFormat::YAML === $translationFormat) {
+                $options['extension'] = $extension;
+            }
+        }
+
+        $dumper->dump($messageCatalogue, $options);
     }
 
     public function detectFormat(string $file): TranslationFormat
@@ -76,26 +93,31 @@ class TranslationService
     private function getDumper(TranslationFormat $translationFormat): XliffFileDumper|YamlFileDumper|JsonFileDumper|PhpFileDumper
     {
         return match ($translationFormat) {
-            TranslationFormat::XLIFF => new XliffFileDumper(),
-            TranslationFormat::YAML => new YamlFileDumper(),
+            TranslationFormat::XLIFF => new XliffFileDumperWithEmptySource(),
+            TranslationFormat::YAML => new YamlFileDumperWithExtension(),
             TranslationFormat::JSON => new JsonFileDumper(),
             TranslationFormat::PHP => new PhpFileDumper(),
         };
     }
 
-    private function markTranslationsAsAutoTranslated(MessageCatalogue $messageCatalogue): void
+    private function markTranslationsAsAutoTranslated(MessageCatalogue $messageCatalogue, ?string $sourceLocale = null): void
     {
+        $targetLocale = $messageCatalogue->getLocale();
+        $noteContent = null !== $sourceLocale
+            ? sprintf('Auto-translated by DeepL (%s → %s)', $sourceLocale, $targetLocale)
+            : 'Auto-translated by DeepL';
+
         foreach ($messageCatalogue->all() as $domain => $messages) {
             foreach (array_keys($messages) as $key) {
-                $messageCatalogue->setMetadata((string) $key, [
-                    'target-attributes' => ['state' => 'needs-review-translation'],
-                    'notes' => [
-                        [
-                            'content' => 'Auto-translated by DeepL',
-                            'from' => 'deepl-autofill',
-                        ],
+                $metadata = $messageCatalogue->getMetadata((string) $key, $domain) ?: [];
+                $metadata['target-attributes'] = ['state' => 'needs-review-translation'];
+                $metadata['notes'] = [
+                    [
+                        'content' => $noteContent,
+                        'from' => 'composer-translation-deepl',
                     ],
-                ], $domain);
+                ];
+                $messageCatalogue->setMetadata((string) $key, $metadata, $domain);
             }
         }
     }

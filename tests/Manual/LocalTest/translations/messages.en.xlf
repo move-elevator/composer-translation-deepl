@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" datatype="plaintext" original="messages" date="2025-01-10T12:00:00Z" product-name="test">
+        <header/>
+        <body>
+            <trans-unit id="welcome.message" resname="welcome.message">
+                <source>Welcome</source>
+            </trans-unit>
+            <trans-unit id="goodbye.message" resname="goodbye.message">
+                <source>Goodbye</source>
+            </trans-unit>
+            <trans-unit id="button.save" resname="button.save">
+                <source>Save</source>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

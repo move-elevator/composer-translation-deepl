@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace MoveElevator\ComposerTranslationDeepl\Command;
 
 use DeepL\DeepLException;
+use MoveElevator\ComposerTranslationDeepl\Enum\TranslationFormat;
 use MoveElevator\ComposerTranslationDeepl\Service\{DeepLBatchTranslator, TranslationService};
 use MoveElevator\ComposerTranslationValidator\FileDetector\Collector;
 use MoveElevator\ComposerTranslationValidator\Validator\MismatchValidator;
@@ -104,10 +105,10 @@ class AutofillCommand extends Command
                 'Overwrite files without confirmation',
             )
             ->addOption(
-                'mark-auto-translated',
-                'm',
+                'no-mark-auto-translated',
+                null,
                 InputOption::VALUE_NONE,
-                'Mark translations with XLIFF state (needs-review-translation)',
+                'Do not mark translations with XLIFF state (needs-review-translation)',
             );
     }
 
@@ -136,17 +137,19 @@ class AutofillCommand extends Command
         $path = $input->getArgument('path');
         $sourceLocale = $input->getOption('source-locale');
         $domain = $input->getOption('domain');
-        $format = $input->getOption('format');
+        $formatString = $input->getOption('format');
+        $format = TranslationFormat::tryFrom($formatString) ?? TranslationFormat::XLIFF;
         $dryRun = $input->getOption('dry-run');
         $force = $input->getOption('force');
-        $markAutoTranslated = $input->getOption('mark-auto-translated');
+        // Mark as auto-translated by default (can be disabled with --no-mark-auto-translated)
+        $markAutoTranslated = !$input->getOption('no-mark-auto-translated');
 
         if ($dryRun) {
             $symfonyStyle->note('DRY RUN MODE - No files will be modified');
         }
 
         // Find translation files
-        $symfonyStyle->text('Finding translation files...');
+        $output->writeln('<fg=cyan>› Scanning for translation files...</>');
         $collector = new Collector();
         $filesByParser = $collector->collectFiles([$path], recursive: true);
 
@@ -156,33 +159,54 @@ class AutofillCommand extends Command
             return Command::FAILURE;
         }
 
-        // Flatten files array
+        // Flatten files array and filter by format
         $files = [];
         foreach ($filesByParser as $parserFiles) {
-            foreach ($parserFiles as $filePath => $data) {
-                $files[] = $filePath;
+            foreach ($parserFiles as $directory => $fileList) {
+                foreach ($fileList as $filename => $paths) {
+                    if (is_array($paths)) {
+                        foreach ($paths as $path) {
+                            // Filter by format extension
+                            if ($this->matchesFormat($path, $format)) {
+                                $files[] = $path;
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        $symfonyStyle->success(sprintf('Found %d translation file(s)', count($files)));
+        if ([] === $files) {
+            $symfonyStyle->error(sprintf('No %s translation files found in: %s', $format->value, $path));
+
+            return Command::FAILURE;
+        }
+
+        $output->writeln(sprintf('  <fg=cyan>▸</> Found <fg=white>%d</> translation file(s)', count($files)));
+        $symfonyStyle->newLine();
 
         // Validate and find missing translations
-        $symfonyStyle->text('Validating translations...');
+        $output->writeln('<fg=cyan>› Validating translations...</>');
 
         $mismatchValidator = new MismatchValidator();
         $issuesData = $mismatchValidator->validate($files, null);
 
         $missingKeysByLocale = $this->groupMissingKeysByLocale($issuesData, $targetLocales);
 
+        // Check for missing target files that don't exist yet
+        $missingKeysByLocale = $this->detectMissingTargetFiles($files, $sourceLocale, $targetLocales, $domain, $missingKeysByLocale);
+
         $totalMissingKeys = array_sum(array_map(count(...), $missingKeysByLocale));
 
         if (0 === $totalMissingKeys) {
-            $symfonyStyle->success('All translations are complete!');
+            $symfonyStyle->newLine();
+            $symfonyStyle->writeln('<fg=green>✓ All translations are complete!</>');
 
             return Command::SUCCESS;
         }
 
-        $symfonyStyle->success(sprintf('Found %d missing translation(s)', $totalMissingKeys));
+        $output->writeln(sprintf('  <fg=cyan>▸</> Found <fg=white>%d</> missing translation(s)', $totalMissingKeys));
+        $symfonyStyle->newLine();
 
         if ($dryRun) {
             $this->displayDryRunInfo($symfonyStyle, $missingKeysByLocale);
@@ -197,7 +221,8 @@ class AutofillCommand extends Command
             return Command::SUCCESS;
         }
 
-        // Initialize DeepL translator
+        $symfonyStyle->newLine();
+
         try {
             $deepLBatchTranslator = new DeepLBatchTranslator($apiKey);
         } catch (DeepLException $deeplException) {
@@ -215,7 +240,8 @@ class AutofillCommand extends Command
                 continue;
             }
 
-            $symfonyStyle->section(sprintf('Translating to %s (%s)', $this->getLanguageName($targetLocale), $targetLocale));
+            $output->writeln('');
+            $output->writeln(sprintf('<fg=cyan>› Translating to %s (%s)</>', $this->getLanguageName($targetLocale), $targetLocale));
 
             $sourceFile = $this->findSourceFile($files, $sourceLocale, $domain);
             $targetFile = $this->findTargetFile($files, $targetLocale, $domain, $sourceFile);
@@ -228,6 +254,14 @@ class AutofillCommand extends Command
             // Load catalogues
             $sourceCatalogue = $this->translationService->loadCatalogue($sourceFile, $sourceLocale, $domain);
             $targetCatalogue = $this->translationService->loadCatalogue($targetFile, $targetLocale, $domain);
+
+            // Add all source keys to target catalogue to ensure XLIFF structure is complete
+            // Set empty values for missing keys (will be filled by translations)
+            foreach ($sourceCatalogue->all($domain) as $key => $sourceText) {
+                if (!$targetCatalogue->defines($key, $domain)) {
+                    $targetCatalogue->set($key, '', $domain);
+                }
+            }
 
             // Filter out empty source texts
             $textsToTranslate = [];
@@ -250,12 +284,13 @@ class AutofillCommand extends Command
             try {
                 $translations = $deepLBatchTranslator->translateBatch($textsToTranslate, $sourceLocale, $targetLocale);
 
+                // Set translated texts (overwrites source texts from addCatalogue)
                 foreach ($translations as $key => $translatedText) {
                     $targetCatalogue->set($key, $translatedText, $domain);
 
                     if ($verbose) {
                         $progressBar->clear();
-                        $symfonyStyle->text(sprintf('  ✓ %s: "%s" → "%s"', $key, $textsToTranslate[$key], $translatedText));
+                        $output->writeln(sprintf('  <fg=green>•</> <fg=gray>%s:</> <fg=white>"%s"</> → <fg=white>"%s"</>', $key, $textsToTranslate[$key], $translatedText));
                         $progressBar->display();
                     }
 
@@ -268,9 +303,10 @@ class AutofillCommand extends Command
 
                 // Save catalogue
                 $outputPath = dirname($targetFile);
-                $this->translationService->saveCatalogue($targetCatalogue, $outputPath, $format, $markAutoTranslated);
+                $this->translationService->saveCatalogue($targetCatalogue, $outputPath, $format, $markAutoTranslated, $sourceLocale, $targetFile);
 
-                $symfonyStyle->success(sprintf('Translated %d key(s) for locale %s', count($translations), $targetLocale));
+                $output->writeln(sprintf('  <fg=green>✓</> Translated <fg=white>%d</> key(s)', count($translations)));
+                $output->writeln(sprintf('  <fg=cyan>▸</> Saved to: <fg=white>%s</>', basename($targetFile)));
             } catch (DeepLException $e) {
                 $progressBar->finish();
                 $symfonyStyle->newLine(2);
@@ -282,13 +318,15 @@ class AutofillCommand extends Command
 
         // Display statistics
         $symfonyStyle->newLine();
-        $symfonyStyle->success(sprintf('Successfully translated %d key(s) in %d language(s)', $totalTranslated, count($missingKeysByLocale)));
+        $output->writeln('<fg=green>✓ Translation completed successfully</>');
+        $output->writeln(sprintf('  <fg=white>%d</> key(s) translated in <fg=white>%d</> language(s)', $totalTranslated, count($missingKeysByLocale)));
 
         // Display API usage
         try {
             $usage = $deepLBatchTranslator->getUsage();
-            $symfonyStyle->text(sprintf(
-                '✓ API Usage: %s / %s characters (%.2f%%)',
+            $symfonyStyle->newLine();
+            $output->writeln(sprintf(
+                '<fg=blue>▸</> API Usage: <fg=white>%s</> / %s characters (<fg=white>%.2f%%</>)',
                 number_format($usage['character_count']),
                 number_format($usage['character_limit']),
                 $usage['percentage'],
@@ -298,6 +336,51 @@ class AutofillCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Detect missing target files that don't exist yet.
+     *
+     * MismatchValidator only validates files that exist on disk. This method
+     * detects target locales that don't have a translation file yet and marks
+     * all source keys as missing for those locales.
+     *
+     * @param array<string>                $files
+     * @param array<string>                $targetLocales
+     * @param array<string, array<string>> $existingMissingKeys
+     *
+     * @return array<string, array<string>>
+     */
+    private function detectMissingTargetFiles(
+        array $files,
+        string $sourceLocale,
+        array $targetLocales,
+        string $domain,
+        array $existingMissingKeys,
+    ): array {
+        $sourceFile = $this->findSourceFile($files, $sourceLocale, $domain);
+        if (!$sourceFile) {
+            return $existingMissingKeys;
+        }
+
+        $messageCatalogue = $this->translationService->loadCatalogue($sourceFile, $sourceLocale, $domain);
+        $allSourceKeys = array_keys($messageCatalogue->all($domain));
+
+        foreach ($targetLocales as $targetLocale) {
+            // Skip if we already found missing keys for this locale
+            if (!empty($existingMissingKeys[$targetLocale])) {
+                continue;
+            }
+
+            $targetFile = $this->findTargetFile($files, $targetLocale, $domain, $sourceFile);
+
+            // If target file doesn't exist, all source keys are missing
+            if (!file_exists($targetFile)) {
+                $existingMissingKeys[$targetLocale] = $allSourceKeys;
+            }
+        }
+
+        return $existingMissingKeys;
     }
 
     /**
@@ -347,7 +430,7 @@ class AutofillCommand extends Command
                     // Extract locale from filename
                     $locale = $this->extractLocaleFromFilename($file);
 
-                    if ($locale && null === $value && in_array($locale, $targetLocales, true)) {
+                    if ($locale && (null === $value || '' === $value) && in_array($locale, $targetLocales, true)) {
                         $grouped[$locale][] = $key;
                     }
                 }
@@ -453,7 +536,7 @@ class AutofillCommand extends Command
     {
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
-        $confirmationQuestion = new ConfirmationQuestion('Translation files will be modified. Continue? (y/n) ', false);
+        $confirmationQuestion = new ConfirmationQuestion('Translation files will be modified. Continue? (Y/n) ', true);
 
         return $helper->ask($input, $output, $confirmationQuestion);
     }
@@ -479,19 +562,55 @@ class AutofillCommand extends Command
 
     private function getLanguageName(string $locale): string
     {
+        // All languages supported by DeepL API
         $languages = [
+            'ar' => 'Arabic',
+            'bg' => 'Bulgarian',
+            'cs' => 'Czech',
+            'da' => 'Danish',
             'de' => 'German',
-            'fr' => 'French',
+            'el' => 'Greek',
+            'en' => 'English',
             'es' => 'Spanish',
+            'et' => 'Estonian',
+            'fi' => 'Finnish',
+            'fr' => 'French',
+            'he' => 'Hebrew',
+            'hu' => 'Hungarian',
+            'id' => 'Indonesian',
             'it' => 'Italian',
+            'ja' => 'Japanese',
+            'ko' => 'Korean',
+            'lt' => 'Lithuanian',
+            'lv' => 'Latvian',
+            'nb' => 'Norwegian Bokmål',
             'nl' => 'Dutch',
             'pl' => 'Polish',
             'pt' => 'Portuguese',
+            'ro' => 'Romanian',
             'ru' => 'Russian',
-            'ja' => 'Japanese',
+            'sk' => 'Slovak',
+            'sl' => 'Slovenian',
+            'sv' => 'Swedish',
+            'th' => 'Thai',
+            'tr' => 'Turkish',
+            'uk' => 'Ukrainian',
+            'vi' => 'Vietnamese',
             'zh' => 'Chinese',
         ];
 
         return $languages[$locale] ?? strtoupper($locale);
+    }
+
+    private function matchesFormat(string $file, TranslationFormat $translationFormat): bool
+    {
+        $extension = pathinfo($file, \PATHINFO_EXTENSION);
+
+        return match ($translationFormat) {
+            TranslationFormat::XLIFF => in_array($extension, ['xlf', 'xliff'], true),
+            TranslationFormat::YAML => in_array($extension, ['yaml', 'yml'], true),
+            TranslationFormat::JSON => 'json' === $extension,
+            TranslationFormat::PHP => 'php' === $extension,
+        };
     }
 }

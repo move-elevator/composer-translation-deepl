@@ -151,7 +151,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::XLIFF, true);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::XLIFF, true, 'en');
 
             $expectedFile = $tempDir.'/messages.de.xlf';
             self::assertFileExists($expectedFile);
@@ -160,8 +160,8 @@ class TranslationServiceTest extends TestCase
             $content = file_get_contents($expectedFile);
             self::assertIsString($content);
             self::assertStringContainsString('state="needs-review-translation"', $content);
-            self::assertStringContainsString('Auto-translated by DeepL', $content);
-            self::assertStringContainsString('deepl-autofill', $content);
+            self::assertStringContainsString('Auto-translated by DeepL (en → de)', $content);
+            self::assertStringContainsString('composer-translation-deepl', $content);
         } finally {
             // Cleanup
             if (is_dir($tempDir)) {

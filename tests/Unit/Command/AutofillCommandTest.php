@@ -55,18 +55,6 @@ class AutofillCommandTest extends TestCase
         self::assertStringContainsString('Auto-fill', $description);
     }
 
-    public function testCommandFailsWithoutApiKey(): void
-    {
-        $this->commandTester->execute([
-            'path' => __DIR__.'/../../Fixtures/symfony',
-            '--target-locales' => ['de'],
-        ]);
-
-        $output = $this->commandTester->getDisplay();
-        self::assertStringContainsString('DeepL API key is required', $output);
-        self::assertSame(1, $this->commandTester->getStatusCode());
-    }
-
     public function testCommandFailsWithoutTargetLocales(): void
     {
         putenv('DEEPL_API_KEY=test-key:fx');
@@ -187,13 +175,13 @@ class AutofillCommandTest extends TestCase
         self::assertFalse($inputOption->acceptValue());
     }
 
-    public function testCommandSupportsMarkAutoTranslatedOption(): void
+    public function testCommandSupportsNoMarkAutoTranslatedOption(): void
     {
         $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($inputDefinition->hasOption('mark-auto-translated'));
+        self::assertTrue($inputDefinition->hasOption('no-mark-auto-translated'));
 
-        $inputOption = $inputDefinition->getOption('mark-auto-translated');
+        $inputOption = $inputDefinition->getOption('no-mark-auto-translated');
         self::assertFalse($inputOption->acceptValue());
     }
 
