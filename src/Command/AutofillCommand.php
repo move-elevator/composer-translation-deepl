@@ -150,8 +150,8 @@ class AutofillCommand extends Command
         $collector = new Collector();
         $filesByParser = $collector->collectFiles([$path], recursive: true);
 
-        if ($filesByParser === []) {
-            $symfonyStyle->error('No translation files found in: ' . $path);
+        if ([] === $filesByParser) {
+            $symfonyStyle->error('No translation files found in: '.$path);
 
             return Command::FAILURE;
         }
@@ -238,7 +238,7 @@ class AutofillCommand extends Command
                 }
             }
 
-            if ($textsToTranslate === []) {
+            if ([] === $textsToTranslate) {
                 $symfonyStyle->warning('No valid texts to translate (all source texts are empty)');
                 continue;
             }
@@ -330,6 +330,7 @@ class AutofillCommand extends Command
                 if (!$key) {
                     continue;
                 }
+
                 if (!is_array($files)) {
                     continue;
                 }
@@ -422,6 +423,7 @@ class AutofillCommand extends Command
         if (str_contains($basename, sprintf('%s.%s.', $domain, $locale))) {
             return true;
         }
+
         // TYPO3 style v10: de.locallang.xlf
         return str_contains($basename, sprintf('%s.%s.', $locale, $domain));
     }

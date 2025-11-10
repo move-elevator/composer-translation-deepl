@@ -21,14 +21,12 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(AutofillCommand::class)]
-
 /**
  * AutofillCommandTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
  * @license MIT
  */
-
 class AutofillCommandTest extends TestCase
 {
     private AutofillCommand $autofillCommand;
@@ -106,97 +104,97 @@ class AutofillCommandTest extends TestCase
 
     public function testCommandSupportsPathArgument(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasArgument('path'));
+        self::assertTrue($inputDefinition->hasArgument('path'));
 
-        $argument = $definition->getArgument('path');
-        self::assertFalse($argument->isRequired());
-        self::assertSame('translations/', $argument->getDefault());
+        $inputArgument = $inputDefinition->getArgument('path');
+        self::assertFalse($inputArgument->isRequired());
+        self::assertSame('translations/', $inputArgument->getDefault());
     }
 
     public function testCommandSupportsSourceLocaleOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('source-locale'));
+        self::assertTrue($inputDefinition->hasOption('source-locale'));
 
-        $option = $definition->getOption('source-locale');
-        self::assertTrue($option->isValueRequired());
-        self::assertSame('en', $option->getDefault());
+        $inputOption = $inputDefinition->getOption('source-locale');
+        self::assertTrue($inputOption->isValueRequired());
+        self::assertSame('en', $inputOption->getDefault());
     }
 
     public function testCommandSupportsTargetLocalesOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('target-locales'));
+        self::assertTrue($inputDefinition->hasOption('target-locales'));
 
-        $option = $definition->getOption('target-locales');
-        self::assertTrue($option->isValueRequired());
-        self::assertTrue($option->isArray());
+        $inputOption = $inputDefinition->getOption('target-locales');
+        self::assertTrue($inputOption->isValueRequired());
+        self::assertTrue($inputOption->isArray());
     }
 
     public function testCommandSupportsApiKeyOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('api-key'));
+        self::assertTrue($inputDefinition->hasOption('api-key'));
 
-        $option = $definition->getOption('api-key');
-        self::assertTrue($option->isValueRequired());
+        $inputOption = $inputDefinition->getOption('api-key');
+        self::assertTrue($inputOption->isValueRequired());
     }
 
     public function testCommandSupportsFormatOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('format'));
+        self::assertTrue($inputDefinition->hasOption('format'));
 
-        $option = $definition->getOption('format');
-        self::assertTrue($option->isValueRequired());
-        self::assertSame('xliff', $option->getDefault());
+        $inputOption = $inputDefinition->getOption('format');
+        self::assertTrue($inputOption->isValueRequired());
+        self::assertSame('xliff', $inputOption->getDefault());
     }
 
     public function testCommandSupportsDomainOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('domain'));
+        self::assertTrue($inputDefinition->hasOption('domain'));
 
-        $option = $definition->getOption('domain');
-        self::assertTrue($option->isValueRequired());
-        self::assertSame('messages', $option->getDefault());
+        $inputOption = $inputDefinition->getOption('domain');
+        self::assertTrue($inputOption->isValueRequired());
+        self::assertSame('messages', $inputOption->getDefault());
     }
 
     public function testCommandSupportsDryRunOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('dry-run'));
+        self::assertTrue($inputDefinition->hasOption('dry-run'));
 
-        $option = $definition->getOption('dry-run');
-        self::assertFalse($option->acceptValue());
+        $inputOption = $inputDefinition->getOption('dry-run');
+        self::assertFalse($inputOption->acceptValue());
     }
 
     public function testCommandSupportsForceOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('force'));
+        self::assertTrue($inputDefinition->hasOption('force'));
 
-        $option = $definition->getOption('force');
-        self::assertFalse($option->acceptValue());
+        $inputOption = $inputDefinition->getOption('force');
+        self::assertFalse($inputOption->acceptValue());
     }
 
     public function testCommandSupportsMarkAutoTranslatedOption(): void
     {
-        $definition = $this->autofillCommand->getDefinition();
+        $inputDefinition = $this->autofillCommand->getDefinition();
 
-        self::assertTrue($definition->hasOption('mark-auto-translated'));
+        self::assertTrue($inputDefinition->hasOption('mark-auto-translated'));
 
-        $option = $definition->getOption('mark-auto-translated');
-        self::assertFalse($option->acceptValue());
+        $inputOption = $inputDefinition->getOption('mark-auto-translated');
+        self::assertFalse($inputOption->acceptValue());
     }
 
     public function testCommandSupportsVerboseOption(): void

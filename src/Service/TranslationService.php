@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace MoveElevator\ComposerTranslationDeepl\Service;
 
+use MoveElevator\ComposerTranslationDeepl\Enum\TranslationFormat;
 use Symfony\Component\Translation\Dumper\{JsonFileDumper, PhpFileDumper, XliffFileDumper, YamlFileDumper};
 use Symfony\Component\Translation\Loader\{JsonFileLoader, PhpFileLoader, XliffFileLoader, YamlFileLoader};
 use Symfony\Component\Translation\MessageCatalogue;
@@ -25,72 +26,60 @@ use Symfony\Component\Translation\MessageCatalogue;
  */
 class TranslationService
 {
-    private const FORMAT_XLIFF = 'xliff';
-
-    private const FORMAT_YAML = 'yaml';
-
-    private const FORMAT_JSON = 'json';
-
-    private const FORMAT_PHP = 'php';
-
     public function loadCatalogue(string $file, string $locale, string $domain = 'messages'): MessageCatalogue
     {
         if (!file_exists($file)) {
             return new MessageCatalogue($locale);
         }
 
-        $format = $this->detectFormat($file);
-        $loader = $this->getLoader($format);
+        $translationFormat = $this->detectFormat($file);
 
-        return $loader->load($file, $locale, $domain);
+        return $this->getLoader($translationFormat)->load($file, $locale, $domain);
     }
 
     public function saveCatalogue(
         MessageCatalogue $messageCatalogue,
         string $outputPath,
-        string $format = self::FORMAT_XLIFF,
+        TranslationFormat $translationFormat = TranslationFormat::XLIFF,
         bool $markAutoTranslated = false,
     ): void {
-        if ($markAutoTranslated && self::FORMAT_XLIFF === $format) {
+        if ($markAutoTranslated && TranslationFormat::XLIFF === $translationFormat) {
             $this->markTranslationsAsAutoTranslated($messageCatalogue);
         }
 
-        $dumper = $this->getDumper($format);
+        $dumper = $this->getDumper($translationFormat);
         $dumper->dump($messageCatalogue, ['path' => $outputPath]);
     }
 
-    public function detectFormat(string $file): string
+    public function detectFormat(string $file): TranslationFormat
     {
         $extension = pathinfo($file, \PATHINFO_EXTENSION);
 
         return match ($extension) {
-            'xlf', 'xliff' => self::FORMAT_XLIFF,
-            'yaml', 'yml' => self::FORMAT_YAML,
-            'json' => self::FORMAT_JSON,
-            'php' => self::FORMAT_PHP,
-            default => self::FORMAT_XLIFF,
+            'yaml', 'yml' => TranslationFormat::YAML,
+            'json' => TranslationFormat::JSON,
+            'php' => TranslationFormat::PHP,
+            default => TranslationFormat::XLIFF,
         };
     }
 
-    private function getLoader(string $format): XliffFileLoader|YamlFileLoader|JsonFileLoader|PhpFileLoader
+    private function getLoader(TranslationFormat $translationFormat): XliffFileLoader|YamlFileLoader|JsonFileLoader|PhpFileLoader
     {
-        return match ($format) {
-            self::FORMAT_XLIFF => new XliffFileLoader(),
-            self::FORMAT_YAML => new YamlFileLoader(),
-            self::FORMAT_JSON => new JsonFileLoader(),
-            self::FORMAT_PHP => new PhpFileLoader(),
-            default => new XliffFileLoader(),
+        return match ($translationFormat) {
+            TranslationFormat::XLIFF => new XliffFileLoader(),
+            TranslationFormat::YAML => new YamlFileLoader(),
+            TranslationFormat::JSON => new JsonFileLoader(),
+            TranslationFormat::PHP => new PhpFileLoader(),
         };
     }
 
-    private function getDumper(string $format): XliffFileDumper|YamlFileDumper|JsonFileDumper|PhpFileDumper
+    private function getDumper(TranslationFormat $translationFormat): XliffFileDumper|YamlFileDumper|JsonFileDumper|PhpFileDumper
     {
-        return match ($format) {
-            self::FORMAT_XLIFF => new XliffFileDumper(),
-            self::FORMAT_YAML => new YamlFileDumper(),
-            self::FORMAT_JSON => new JsonFileDumper(),
-            self::FORMAT_PHP => new PhpFileDumper(),
-            default => new XliffFileDumper(),
+        return match ($translationFormat) {
+            TranslationFormat::XLIFF => new XliffFileDumper(),
+            TranslationFormat::YAML => new YamlFileDumper(),
+            TranslationFormat::JSON => new JsonFileDumper(),
+            TranslationFormat::PHP => new PhpFileDumper(),
         };
     }
 

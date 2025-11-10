@@ -45,7 +45,7 @@ class DeepLBatchTranslator
      */
     public function translateBatch(array $texts, string $sourceLocale, string $targetLocale): array
     {
-        if ($texts === []) {
+        if ([] === $texts) {
             return [];
         }
 

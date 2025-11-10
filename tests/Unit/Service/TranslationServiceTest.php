@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace MoveElevator\ComposerTranslationDeepl\Tests\Unit\Service;
 
+use MoveElevator\ComposerTranslationDeepl\Enum\TranslationFormat;
 use MoveElevator\ComposerTranslationDeepl\Service\TranslationService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -39,70 +40,70 @@ class TranslationServiceTest extends TestCase
 
     public function testDetectFormatReturnsXliffForXlfExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.xlf');
-        self::assertSame('xliff', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.xlf');
+        self::assertSame(TranslationFormat::XLIFF, $translationFormat);
     }
 
     public function testDetectFormatReturnsXliffForXliffExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.xliff');
-        self::assertSame('xliff', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.xliff');
+        self::assertSame(TranslationFormat::XLIFF, $translationFormat);
     }
 
     public function testDetectFormatReturnsYamlForYamlExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.yaml');
-        self::assertSame('yaml', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.yaml');
+        self::assertSame(TranslationFormat::YAML, $translationFormat);
     }
 
     public function testDetectFormatReturnsYamlForYmlExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.yml');
-        self::assertSame('yaml', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.yml');
+        self::assertSame(TranslationFormat::YAML, $translationFormat);
     }
 
     public function testDetectFormatReturnsJsonForJsonExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.json');
-        self::assertSame('json', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.json');
+        self::assertSame(TranslationFormat::JSON, $translationFormat);
     }
 
     public function testDetectFormatReturnsPhpForPhpExtension(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.php');
-        self::assertSame('php', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.php');
+        self::assertSame(TranslationFormat::PHP, $translationFormat);
     }
 
     public function testDetectFormatReturnsXliffAsDefault(): void
     {
-        $format = $this->translationService->detectFormat('messages.en.unknown');
-        self::assertSame('xliff', $format);
+        $translationFormat = $this->translationService->detectFormat('messages.en.unknown');
+        self::assertSame(TranslationFormat::XLIFF, $translationFormat);
     }
 
     public function testLoadCatalogueReturnsEmptyCatalogueForNonExistentFile(): void
     {
-        $catalogue = $this->translationService->loadCatalogue('/non/existent/file.xlf', 'en');
+        $messageCatalogue = $this->translationService->loadCatalogue('/non/existent/file.xlf', 'en');
 
-        self::assertSame('en', $catalogue->getLocale());
-        self::assertEmpty($catalogue->all());
+        self::assertSame('en', $messageCatalogue->getLocale());
+        self::assertEmpty($messageCatalogue->all());
     }
 
     public function testLoadCatalogueLoadsXliffFile(): void
     {
         $file = $this->fixturesPath.'/messages.en.xlf';
-        $catalogue = $this->translationService->loadCatalogue($file, 'en', 'messages');
+        $messageCatalogue = $this->translationService->loadCatalogue($file, 'en', 'messages');
 
-        self::assertSame('en', $catalogue->getLocale());
-        self::assertTrue($catalogue->has('welcome.message', 'messages'));
-        self::assertSame('Welcome', $catalogue->get('welcome.message', 'messages'));
+        self::assertSame('en', $messageCatalogue->getLocale());
+        self::assertTrue($messageCatalogue->has('welcome.message', 'messages'));
+        self::assertSame('Welcome', $messageCatalogue->get('welcome.message', 'messages'));
     }
 
     public function testLoadCatalogueLoadsAllMessages(): void
     {
         $file = $this->fixturesPath.'/messages.en.xlf';
-        $catalogue = $this->translationService->loadCatalogue($file, 'en', 'messages');
+        $messageCatalogue = $this->translationService->loadCatalogue($file, 'en', 'messages');
 
-        $messages = $catalogue->all('messages');
+        $messages = $messageCatalogue->all('messages');
         self::assertCount(3, $messages);
         self::assertArrayHasKey('welcome.message', $messages);
         self::assertArrayHasKey('goodbye.message', $messages);
@@ -118,7 +119,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, 'xliff', false);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::XLIFF, false);
 
             $expectedFile = $tempDir.'/messages.de.xlf';
             self::assertFileExists($expectedFile);
@@ -150,7 +151,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, 'xliff', true);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::XLIFF, true);
 
             $expectedFile = $tempDir.'/messages.de.xlf';
             self::assertFileExists($expectedFile);
@@ -183,7 +184,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, 'yaml', false);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::YAML, false);
 
             // Symfony YAML dumper creates .yml extension, not .yaml
             $expectedFile = $tempDir.'/messages.de.yml';
@@ -210,7 +211,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, 'json', false);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::JSON, false);
 
             $expectedFile = $tempDir.'/messages.de.json';
             self::assertFileExists($expectedFile);
@@ -243,7 +244,7 @@ class TranslationServiceTest extends TestCase
             $messageCatalogue = new MessageCatalogue('de');
             $messageCatalogue->set('test.key', 'Test Wert', 'messages');
 
-            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, 'php', false);
+            $this->translationService->saveCatalogue($messageCatalogue, $tempDir, TranslationFormat::PHP, false);
 
             $expectedFile = $tempDir.'/messages.de.php';
             self::assertFileExists($expectedFile);
