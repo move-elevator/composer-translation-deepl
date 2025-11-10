@@ -25,7 +25,7 @@ A lightweight Composer package that automatically completes missing translations
 * **API Usage Display** - Shows your DeepL character usage
 * **XLIFF Marking** - State marking for auto-translated content
 
-> [!INFO]
+> [!NOTE]
 > This package is a feature addon for finding missing translations with the [composer-translation-validator](https://github.com/move-elevator/composer-translation-validator) plugin.
 
 ## 🔥 Installation
