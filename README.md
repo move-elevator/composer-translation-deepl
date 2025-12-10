@@ -13,6 +13,9 @@
 
 A lightweight Composer package that automatically completes missing translations in your project translation files.
 
+> [!warning]
+> This package is in early development stage and may change significantly in the future. I am working steadily to release a stable version as soon as possible.
+
 ## ✨ Features
 
 * **Automatic Translation** - Uses DeepL API to fill missing translation keys
