@@ -32,7 +32,14 @@ class Application extends BaseApplication
     {
         parent::__construct(self::NAME, self::VERSION);
 
-        $this->add(new AutofillCommand());
+        // @phpstan-ignore function.alreadyNarrowedType (method only exists in Symfony Console 8+)
+        if (method_exists($this, 'addCommand')) {
+            $this->addCommand(new AutofillCommand());
+        } else {
+            // @phpstan-ignore method.notFound (Symfony Console < 8)
+            $this->add(new AutofillCommand());
+        }
+
         $this->setDefaultCommand('autofill', true);
     }
 }

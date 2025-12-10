@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(AutofillCommand::class)]
@@ -38,7 +39,7 @@ class AutofillCommandTest extends TestCase
         $this->autofillCommand = new AutofillCommand();
 
         $application = new Application();
-        $application->add($this->autofillCommand);
+        $this->addCommandToApplication($application, $this->autofillCommand);
 
         $this->commandTester = new CommandTester($this->autofillCommand);
     }
@@ -189,7 +190,7 @@ class AutofillCommandTest extends TestCase
     {
         // Verbose is a default Symfony option available in the application, not command definition
         $application = new Application();
-        $application->add($this->autofillCommand);
+        $this->addCommandToApplication($application, $this->autofillCommand);
 
         $inputDefinition = $application->getDefinition();
         self::assertTrue($inputDefinition->hasOption('verbose'));
@@ -199,7 +200,7 @@ class AutofillCommandTest extends TestCase
     {
         // Quiet is a default Symfony option available in the application, not command definition
         $application = new Application();
-        $application->add($this->autofillCommand);
+        $this->addCommandToApplication($application, $this->autofillCommand);
 
         $inputDefinition = $application->getDefinition();
         self::assertTrue($inputDefinition->hasOption('quiet'));
@@ -277,5 +278,16 @@ class AutofillCommandTest extends TestCase
         $reflectionMethod = $reflectionClass->getMethod('getLanguageName');
 
         self::assertSame('XX', $reflectionMethod->invoke($this->autofillCommand, 'xx'));
+    }
+
+    private function addCommandToApplication(Application $application, Command $command): void
+    {
+        // @phpstan-ignore function.alreadyNarrowedType (method only exists in Symfony Console 8+)
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            // @phpstan-ignore method.notFound (Symfony Console < 8)
+            $application->add($command);
+        }
     }
 }
