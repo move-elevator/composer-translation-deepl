@@ -20,7 +20,7 @@ use Symfony\Component\Translation\MessageCatalogue;
  * YamlFileDumperWithExtension.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class YamlFileDumperWithExtension extends YamlFileDumper
 {

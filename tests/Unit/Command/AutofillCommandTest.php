@@ -25,7 +25,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * AutofillCommandTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class AutofillCommandTest extends TestCase
 {

@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * ApplicationTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class ApplicationTest extends TestCase
 {
@@ -41,7 +41,7 @@ class ApplicationTest extends TestCase
 
     public function testApplicationHasCorrectVersion(): void
     {
-        self::assertSame('1.0.0', $this->application->getVersion());
+        self::assertSame('0.1.0', $this->application->getVersion());
     }
 
     public function testApplicationRegistersAutofillCommand(): void

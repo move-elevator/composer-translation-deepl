@@ -37,7 +37,7 @@ use function sprintf;
  * AutofillCommand.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class AutofillCommand extends Command
 {

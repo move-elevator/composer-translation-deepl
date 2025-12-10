@@ -17,7 +17,7 @@ namespace MoveElevator\ComposerTranslationDeepl\Enum;
  * TranslationFormat.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 enum TranslationFormat: string
 {

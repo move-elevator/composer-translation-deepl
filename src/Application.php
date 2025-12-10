@@ -20,13 +20,13 @@ use Symfony\Component\Console\Application as BaseApplication;
  * Application.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class Application extends BaseApplication
 {
     private const NAME = 'Composer Translation DeepL Autofill';
 
-    private const VERSION = '1.0.0';
+    private const VERSION = '0.1.0';
 
     public function __construct()
     {

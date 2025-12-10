@@ -25,7 +25,7 @@ use function assert;
  * XliffFileDumperWithEmptySource.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class XliffFileDumperWithEmptySource extends XliffFileDumper
 {

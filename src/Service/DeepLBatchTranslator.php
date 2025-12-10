@@ -19,7 +19,7 @@ use DeepL\{DeepLException, Translator};
  * DeepLBatchTranslator.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class DeepLBatchTranslator
 {

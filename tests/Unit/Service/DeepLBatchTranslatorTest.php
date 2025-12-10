@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * DeepLBatchTranslatorTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class DeepLBatchTranslatorTest extends TestCase
 {

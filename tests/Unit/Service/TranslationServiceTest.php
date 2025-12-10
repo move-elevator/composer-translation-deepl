@@ -24,7 +24,7 @@ use Symfony\Component\Translation\MessageCatalogue;
  * TranslationServiceTest.
  *
  * @author Konrad Michalik <km@move-elevator.de>
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 class TranslationServiceTest extends TestCase
 {
