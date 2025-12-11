@@ -272,9 +272,21 @@ class AutofillCommand extends Command
 
             // Add all source keys to target catalogue to ensure XLIFF structure is complete
             // Set empty values for missing keys (will be filled by translations)
+            // Also copy metadata (including original IDs) from source catalogue
             foreach ($sourceCatalogue->all($domain) as $key => $sourceText) {
                 if (!$targetCatalogue->defines($key, $domain)) {
                     $targetCatalogue->set($key, '', $domain);
+                }
+
+                // Copy metadata from source to target (preserves original trans-unit IDs)
+                $sourceMetadata = $sourceCatalogue->getMetadata($key, $domain);
+                if (null !== $sourceMetadata) {
+                    $targetMetadata = $targetCatalogue->getMetadata($key, $domain) ?? [];
+                    // Preserve existing target metadata but add source ID if not present
+                    if (!isset($targetMetadata['id']) && isset($sourceMetadata['id'])) {
+                        $targetMetadata['id'] = $sourceMetadata['id'];
+                        $targetCatalogue->setMetadata($key, $targetMetadata, $domain);
+                    }
                 }
             }
 
@@ -542,7 +554,7 @@ class AutofillCommand extends Command
 
         // Try to detect naming convention from source file
         // Symfony style: messages.en.xlf → messages.de.xlf
-        if (preg_match('/^([^.]+)\.([a-z]{2})\.(.+)$/', $basename, $matches)) {
+        if (preg_match('/^(.+)\.([a-z]{2})\.([^.]+)$/', $basename, $matches)) {
             $domain = $matches[1];
 
             return sprintf('%s/%s.%s.%s', $dir, $domain, $locale, $extension);
@@ -555,8 +567,10 @@ class AutofillCommand extends Command
             return sprintf('%s/%s.%s', $dir, $locale, $rest);
         }
 
-        // File without locale in name: locallang.xlf → de.locallang.xlf (TYPO3 v10 style)
-        return sprintf('%s/%s.%s', $dir, $locale, $basename);
+        // File without locale in name: locallang.xlf → locallang.de.xlf (TYPO3 v11+ style)
+        $nameWithoutExtension = pathinfo($basename, \PATHINFO_FILENAME);
+
+        return sprintf('%s/%s.%s.%s', $dir, $nameWithoutExtension, $locale, $extension);
     }
 
     private function confirmOverwrite(SymfonyStyle $symfonyStyle, InputInterface $input, OutputInterface $output): bool

@@ -15,8 +15,9 @@ namespace MoveElevator\ComposerTranslationDeepl\Service;
 
 use MoveElevator\ComposerTranslationDeepl\Dumper\{XliffFileDumperWithEmptySource, YamlFileDumperWithExtension};
 use MoveElevator\ComposerTranslationDeepl\Enum\TranslationFormat;
+use MoveElevator\ComposerTranslationDeepl\Loader\XliffFileLoaderWithId;
 use Symfony\Component\Translation\Dumper\{JsonFileDumper, PhpFileDumper, XliffFileDumper, YamlFileDumper};
-use Symfony\Component\Translation\Loader\{JsonFileLoader, PhpFileLoader, XliffFileLoader, YamlFileLoader};
+use Symfony\Component\Translation\Loader\{JsonFileLoader, PhpFileLoader, YamlFileLoader};
 use Symfony\Component\Translation\MessageCatalogue;
 
 use function sprintf;
@@ -53,18 +54,20 @@ class TranslationService
         }
 
         $dumper = $this->getDumper($translationFormat);
-        $options = ['path' => $outputPath];
 
-        // If a specific target file is provided, use its extension for the dumper
+        // If a specific target file is provided, write directly to that file
         if (null !== $targetFile) {
-            $extension = pathinfo($targetFile, \PATHINFO_EXTENSION);
-            $options['default_locale'] = $messageCatalogue->getLocale();
-            // For YAML files, preserve the exact extension (.yaml vs .yml)
-            if (TranslationFormat::YAML === $translationFormat) {
-                $options['extension'] = $extension;
-            }
+            $domains = $messageCatalogue->getDomains();
+            $domain = $domains[0] ?? 'messages';
+            $content = $dumper->formatCatalogue($messageCatalogue, $domain, [
+                'default_locale' => $sourceLocale ?? $messageCatalogue->getLocale(),
+            ]);
+            file_put_contents($targetFile, $content);
+
+            return;
         }
 
+        $options = ['path' => $outputPath];
         $dumper->dump($messageCatalogue, $options);
     }
 
@@ -80,10 +83,10 @@ class TranslationService
         };
     }
 
-    private function getLoader(TranslationFormat $translationFormat): XliffFileLoader|YamlFileLoader|JsonFileLoader|PhpFileLoader
+    private function getLoader(TranslationFormat $translationFormat): XliffFileLoaderWithId|YamlFileLoader|JsonFileLoader|PhpFileLoader
     {
         return match ($translationFormat) {
-            TranslationFormat::XLIFF => new XliffFileLoader(),
+            TranslationFormat::XLIFF => new XliffFileLoaderWithId(),
             TranslationFormat::YAML => new YamlFileLoader(),
             TranslationFormat::JSON => new JsonFileLoader(),
             TranslationFormat::PHP => new PhpFileLoader(),

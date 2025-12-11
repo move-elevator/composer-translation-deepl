@@ -57,8 +57,12 @@ class XliffFileDumperWithEmptySource extends XliffFileDumper
         foreach ($messages->all($domain) as $source => $target) {
             $transUnit = $body->appendChild($domDocument->createElement('trans-unit'));
             assert($transUnit instanceof DOMElement);
-            // Use the translation key as both id and resname for consistency
-            $transUnit->setAttribute('id', $source);
+
+            // Use original ID from metadata if available, otherwise fall back to key
+            $metadata = $messages->getMetadata($source, $domain) ?? [];
+            $originalId = $metadata['id'] ?? $source;
+
+            $transUnit->setAttribute('id', $originalId);
             $transUnit->setAttribute('resname', $source);
 
             // Create empty source tag
