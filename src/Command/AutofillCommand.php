@@ -277,6 +277,7 @@ class AutofillCommand extends Command
                 if (!$targetCatalogue->defines($key, $domain)) {
                     $targetCatalogue->set($key, '', $domain);
                 }
+
                 // Copy metadata from source to target (preserves original trans-unit IDs)
                 $sourceMetadata = $sourceCatalogue->getMetadata($key, $domain);
                 if (null !== $sourceMetadata) {
