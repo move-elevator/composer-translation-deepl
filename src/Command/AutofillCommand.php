@@ -31,6 +31,7 @@ use function count;
 use function dirname;
 use function in_array;
 use function is_array;
+use function is_file;
 use function sprintf;
 
 /**
@@ -56,7 +57,7 @@ class AutofillCommand extends Command
             ->addArgument(
                 'path',
                 InputArgument::OPTIONAL,
-                'Path to translation files directory',
+                'Path to translation file or directory',
                 'translations/',
             )
             ->addOption(
@@ -150,36 +151,50 @@ class AutofillCommand extends Command
 
         // Find translation files
         $output->writeln('<fg=cyan>› Scanning for translation files...</>');
-        $collector = new Collector();
-        $filesByParser = $collector->collectFiles([$path], recursive: true);
 
-        if ([] === $filesByParser) {
-            $symfonyStyle->error('No translation files found in: '.$path);
+        // Check if path is a single file or a directory
+        if (is_file($path)) {
+            // Single file mode
+            if (!$this->matchesFormat($path, $format)) {
+                $symfonyStyle->error(sprintf('File does not match format %s: %s', $format->value, $path));
 
-            return Command::FAILURE;
-        }
+                return Command::FAILURE;
+            }
 
-        // Flatten files array and filter by format
-        $files = [];
-        foreach ($filesByParser as $parserFiles) {
-            foreach ($parserFiles as $directory => $fileList) {
-                foreach ($fileList as $filename => $paths) {
-                    if (is_array($paths)) {
-                        foreach ($paths as $path) {
-                            // Filter by format extension
-                            if ($this->matchesFormat($path, $format)) {
-                                $files[] = $path;
+            $files = [$path];
+        } else {
+            // Directory mode
+            $collector = new Collector();
+            $filesByParser = $collector->collectFiles([$path], recursive: true);
+
+            if ([] === $filesByParser) {
+                $symfonyStyle->error('No translation files found in: '.$path);
+
+                return Command::FAILURE;
+            }
+
+            // Flatten files array and filter by format
+            $files = [];
+            foreach ($filesByParser as $parserFiles) {
+                foreach ($parserFiles as $directory => $fileList) {
+                    foreach ($fileList as $filename => $filePaths) {
+                        if (is_array($filePaths)) {
+                            foreach ($filePaths as $filePath) {
+                                // Filter by format extension
+                                if ($this->matchesFormat($filePath, $format)) {
+                                    $files[] = $filePath;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        if ([] === $files) {
-            $symfonyStyle->error(sprintf('No %s translation files found in: %s', $format->value, $path));
+            if ([] === $files) {
+                $symfonyStyle->error(sprintf('No %s translation files found in: %s', $format->value, $path));
 
-            return Command::FAILURE;
+                return Command::FAILURE;
+            }
         }
 
         $output->writeln(sprintf('  <fg=cyan>▸</> Found <fg=white>%d</> translation file(s)', count($files)));

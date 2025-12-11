@@ -66,6 +66,9 @@ php bin/autotranslate -t de
 ### Advanced Options
 
 ```bash
+# Translate a single file
+vendor/bin/autotranslate translations/messages.en.xlf -t de
+
 # Translate to multiple languages
 vendor/bin/autotranslate translations/ -t de -t fr -t es
 
@@ -87,7 +90,7 @@ vendor/bin/autotranslate <path> [options]
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `path` |  | Path to translation files directory | `translations/` |
+| `path` |  | Path to translation file or directory | `translations/` |
 | `--source-locale` | `-s` | Source locale | `en` |
 | `--target-locales` | `-t` | Target locales (multiple) | required |
 | `--api-key` | `-k` | DeepL API key | `DEEPL_API_KEY` env |
