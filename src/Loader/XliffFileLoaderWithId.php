@@ -67,6 +67,7 @@ class XliffFileLoaderWithId extends XliffFileLoader
             if (null === $key) {
                 continue;
             }
+
             if ('' === $key) {
                 continue;
             }
