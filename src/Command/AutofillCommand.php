@@ -485,8 +485,16 @@ class AutofillCommand extends Command
      */
     private function findSourceFile(array $files, string $locale, string $domain): ?string
     {
+        // First try to find file with locale in name
         foreach ($files as $file) {
             if ($this->matchesLocaleAndDomain($file, $locale, $domain)) {
+                return $file;
+            }
+        }
+
+        // Fallback: find file without locale in name (treat as source locale)
+        foreach ($files as $file) {
+            if (null === $this->extractLocaleFromFilename($file)) {
                 return $file;
             }
         }
@@ -540,11 +548,15 @@ class AutofillCommand extends Command
             return sprintf('%s/%s.%s.%s', $dir, $domain, $locale, $extension);
         }
 
-        // TYPO3 style: locallang.xlf → de.locallang.xlf or locallang.de.xlf
-        // Default to TYPO3 v11+ style
-        $name = pathinfo($sourceFile, \PATHINFO_FILENAME);
+        // TYPO3 v10 style: de.locallang.xlf → fr.locallang.xlf
+        if (preg_match('/^[a-z]{2}\.(.+)$/', $basename, $matches)) {
+            $rest = $matches[1];
 
-        return sprintf('%s/%s.%s.%s', $dir, $name, $locale, $extension);
+            return sprintf('%s/%s.%s', $dir, $locale, $rest);
+        }
+
+        // File without locale in name: locallang.xlf → de.locallang.xlf (TYPO3 v10 style)
+        return sprintf('%s/%s.%s', $dir, $locale, $basename);
     }
 
     private function confirmOverwrite(SymfonyStyle $symfonyStyle, InputInterface $input, OutputInterface $output): bool
