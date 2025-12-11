@@ -160,6 +160,7 @@ class AutofillCommand extends Command
 
                 return Command::FAILURE;
             }
+
             $files = [$path];
         } else {
             // Directory mode
